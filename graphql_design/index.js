@@ -12,11 +12,31 @@ const typeDefs = gql`
     make: String!
   }
 
-  type Group {
+  type ManualGroup {
     id: ID!
     name: String!
     imageId: ID!
     bodyHtml: String
+    memberships: [GroupMembership!]!
+  }
+
+  type AAutomaticGroup {
+    id: ID!
+    name: String!
+    imageId: ID!
+    bodyHtml: String!
+    feature: [AutomaticGroupFeatures!]!
+    applyFeaturesSeparately: Boolean!
+    memberships: [GroupMembership!]!
+  }
+
+  type AutomaticGroupFeatures {
+    column: String
+  }
+
+  type GroupMembership {
+    groupId: ID!
+    carId: ID!
   }
 `;
 
