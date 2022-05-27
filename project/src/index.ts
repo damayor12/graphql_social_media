@@ -1,12 +1,12 @@
-import {ApolloServer} from 'apollo-server'
-import { typeDefs } from './schema'
-import { Query, Mutation } from './resolvers'
-import colors from 'colors'
-import {PrismaClient, Prisma } from '@prisma/client'
+import { ApolloServer } from 'apollo-server';
+import { typeDefs } from './schema';
+import { Query, Mutation } from './resolvers';
+import colors from 'colors';
+require('dotenv').config();
+import { PrismaClient, Prisma } from '@prisma/client';
+import { getUserFromToken } from './utils/getUserFromToken';
 
-
-
-const prisma = new PrismaClient()
+const prisma = new PrismaClient();
 
 export interface Context {
   prisma: PrismaClient<
@@ -14,19 +14,27 @@ export interface Context {
     never,
     Prisma.RejectOnNotFound | Prisma.RejectPerOperation | undefined
   >;
+  userInfo: {
+    userId: number;
+  } | null;
 }
-
 
 const server = new ApolloServer({
   typeDefs,
-  resolvers : {
+  resolvers: {
     Query,
-    Mutation
+    Mutation,
   },
-  context: {
-    prisma
-  }
-})
+  context: async ({ req }: any): Promise<Context> => {
+    console.log('new', req.headers.authorization);
+    const userInfo = await getUserFromToken(req.headers.authorization);
+    console.log('fff', userInfo)
+    return {
+      prisma,
+      userInfo,
+    };
+  },
+});
 
 server.listen().then(({ url }) => {
   console.log(`Server is ready at port ${url}`);

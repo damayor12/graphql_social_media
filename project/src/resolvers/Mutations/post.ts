@@ -1,5 +1,5 @@
 import { Post, Prisma } from '@prisma/client';
-import { Context } from '../index';
+import { Context } from '../../index';
 
 interface PostArgs {
   post: {
@@ -15,8 +15,25 @@ interface PostPayloadType {
   post: Post | Prisma.Prisma__PostClient<Post> | null;
 }
 
-export const Mutation = {
-  postCreate: async (_: any, { post }: PostArgs, { prisma }: Context): Promise<PostPayloadType> => {
+export const postResolvers = {
+  postCreate: async (
+    _: any,
+    { post }: PostArgs,
+    { prisma, userInfo }: Context,
+  ): Promise<PostPayloadType> => {
+
+    console.log('USERINFO', userInfo)
+    if (!userInfo) {
+      return {
+        userErrors: [
+          {
+            message: 'forbidden, unauthorized',
+          },
+        ],
+        post: null,
+      };
+    }
+
     const { title, content } = post;
     if (!title || !content) {
       return {
@@ -35,7 +52,7 @@ export const Mutation = {
         data: {
           title,
           content,
-          authorId: 1,
+          authorId: userInfo.userId
         },
       }),
     };
@@ -121,7 +138,7 @@ export const Mutation = {
 
     return {
       userErrors: [],
-      post
-    }
+      post,
+    };
   },
 };
