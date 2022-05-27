@@ -1,5 +1,6 @@
 import { Post, Prisma } from '@prisma/client';
 import { Context } from '../../index';
+import { canUserMutatePost } from '../../utils/canMutatePost';
 
 interface PostArgs {
   post: {
@@ -21,8 +22,7 @@ export const postResolvers = {
     { post }: PostArgs,
     { prisma, userInfo }: Context,
   ): Promise<PostPayloadType> => {
-
-    console.log('USERINFO', userInfo)
+    console.log('USERINFO', userInfo);
     if (!userInfo) {
       return {
         userErrors: [
@@ -52,7 +52,7 @@ export const postResolvers = {
         data: {
           title,
           content,
-          authorId: userInfo.userId
+          authorId: userInfo.userId,
         },
       }),
     };
@@ -60,8 +60,27 @@ export const postResolvers = {
   postUpdate: async (
     _: any,
     { post, postId }: { post: PostArgs['post']; postId: string },
-    { prisma }: Context,
+    { prisma, userInfo }: Context,
   ): Promise<PostPayloadType> => {
+    if (!userInfo) {
+      return {
+        userErrors: [
+          {
+            message: 'forbidden, unauthorized',
+          },
+        ],
+        post: null,
+      };
+    }
+
+    const error = await canUserMutatePost({
+      userId: userInfo.userId,
+      postId: Number(postId),
+      prisma,
+    });
+
+    if (error) return error;
+
     const { title, content } = post;
 
     if (!title && !content) {
@@ -111,8 +130,26 @@ export const postResolvers = {
   postDelete: async (
     _: any,
     { postId }: { postId: string },
-    { prisma }: Context,
+    { prisma, userInfo }: Context,
   ): Promise<PostPayloadType> => {
+    if (!userInfo) {
+      return {
+        userErrors: [
+          {
+            message: 'forbidden, unauthorized',
+          },
+        ],
+        post: null,
+      };
+    }
+
+    const error = await canUserMutatePost({
+      userId: userInfo.userId,
+      postId: Number(postId),
+      prisma,
+    });
+
+    if (error) return error;
     const post = await prisma.post.findUnique({
       where: {
         id: parseInt(postId),
@@ -139,6 +176,78 @@ export const postResolvers = {
     return {
       userErrors: [],
       post,
+    };
+  },
+  postPublish: async (
+    _: any,
+    { postId }: { postId: string },
+    { prisma, userInfo }: Context,
+  ): Promise<PostPayloadType> => {
+    if (!userInfo) {
+      return {
+        userErrors: [
+          {
+            message: 'forbidden, unauthorized',
+          },
+        ],
+        post: null,
+      };
+    }
+
+    const error = await canUserMutatePost({
+      userId: userInfo.userId,
+      postId: Number(postId),
+      prisma,
+    });
+
+    if (error) return error;
+
+    return {
+      userErrors: [],
+      post: prisma.post.update({
+        where: {
+          id: Number(postId),
+        },
+        data: {
+          published: true,
+        },
+      }),
+    };
+  },
+  postUnPublish: async (
+    _: any,
+    { postId }: { postId: string },
+    { prisma, userInfo }: Context,
+  ): Promise<PostPayloadType> => {
+    if (!userInfo) {
+      return {
+        userErrors: [
+          {
+            message: 'forbidden, unauthorized',
+          },
+        ],
+        post: null,
+      };
+    }
+
+    const error = await canUserMutatePost({
+      userId: userInfo.userId,
+      postId: Number(postId),
+      prisma,
+    });
+
+    if (error) return error;
+
+    return {
+      userErrors: [],
+      post: prisma.post.update({
+        where: {
+          id: Number(postId),
+        },
+        data: {
+          published: false,
+        },
+      }),
     };
   },
 };
