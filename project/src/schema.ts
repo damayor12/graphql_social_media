@@ -3,7 +3,9 @@ import colors from 'colors';
 
 export const typeDefs = gql`
   type Query {
+    me: User
     posts: [Post!]!
+    profile(userId: ID!): Profile
   }
 
   type Mutation {
@@ -29,7 +31,6 @@ export const typeDefs = gql`
     id: ID!
     name: String!
     email: String!
-    profile: Profile
     posts: [Post!]!
   }
 

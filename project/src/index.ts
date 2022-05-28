@@ -1,6 +1,6 @@
 import { ApolloServer } from 'apollo-server';
 import { typeDefs } from './schema';
-import { Query, Mutation } from './resolvers';
+import { Query, Mutation, Profile, Post, User } from './resolvers';
 import colors from 'colors';
 require('dotenv').config();
 import { PrismaClient, Prisma } from '@prisma/client';
@@ -24,6 +24,9 @@ const server = new ApolloServer({
   resolvers: {
     Query,
     Mutation,
+    Profile,
+    Post,
+    User
   },
   context: async ({ req }: any): Promise<Context> => {
     console.log('new', req.headers.authorization);
